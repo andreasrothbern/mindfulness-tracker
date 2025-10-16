@@ -9,6 +9,18 @@ import { PwaService } from '../../services/pwa.service';
   standalone: true,
   imports: [CommonModule],
   template: `
+    <!-- Debug Info -->
+    <div *ngIf="showDebugInfo"
+         class="fixed top-4 left-4 right-4 bg-yellow-500 text-black p-3 rounded-lg shadow-lg z-50 text-xs">
+      <div><strong>Debug Info:</strong></div>
+      <div>iOS: {{isIOS}}</div>
+      <div>Standalone: {{isStandalone}}</div>
+      <div>Can Install: {{canInstall}}</div>
+      <div>User Agent: {{userAgent.substring(0, 50)}}...</div>
+      <button (click)="showDebugInfo = false" class="mt-2 bg-black text-yellow-500 px-2 py-1 rounded text-xs">Schließen</button>
+    </div>
+
+    <!-- Android Install Prompt -->
     <div *ngIf="showInstallPrompt"
          class="fixed bottom-4 left-4 right-4 bg-gradient-to-r from-emerald-500 to-blue-500 text-white p-4 rounded-lg shadow-lg z-50 animate-bounce">
 
@@ -36,23 +48,35 @@ import { PwaService } from '../../services/pwa.service';
       </div>
     </div>
 
-    <!-- iOS Safari Hinweis -->
+    <!-- iOS Safari Hinweis - Verbessertes Design -->
     <div *ngIf="showIosPrompt"
-         class="fixed bottom-4 left-4 right-4 bg-blue-500 text-white p-4 rounded-lg shadow-lg z-50">
+         class="fixed bottom-4 left-4 right-4 bg-gradient-to-r from-blue-500 to-purple-500 text-white p-4 rounded-lg shadow-lg z-50">
 
       <div class="flex items-start space-x-3">
-        <div class="text-2xl">🍎</div>
+        <div class="text-3xl">🍎</div>
         <div class="flex-1">
-          <div class="font-semibold mb-2">App auf iPhone installieren</div>
-          <div class="text-sm space-y-1">
-            <div>1. Tippe auf das <strong>Teilen-Symbol</strong> ⬆️</div>
-            <div>2. Wähle <strong>"Zum Home-Bildschirm"</strong></div>
-            <div>3. Tippe <strong>"Hinzufügen"</strong></div>
+          <div class="font-bold text-lg mb-2">📱 Als App installieren</div>
+          <div class="text-sm space-y-2 bg-white/10 p-3 rounded">
+            <div class="flex items-center space-x-2">
+              <span class="bg-white text-blue-600 rounded px-1 text-xs font-bold">1</span>
+              <span>Tippe auf das <strong>Teilen-Symbol</strong> ⬆️ (unten in Safari)</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="bg-white text-blue-600 rounded px-1 text-xs font-bold">2</span>
+              <span>Scrolle und wähle <strong>"Zum Home-Bildschirm"</strong> 📲</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="bg-white text-blue-600 rounded px-1 text-xs font-bold">3</span>
+              <span>Tippe <strong>"Hinzufügen"</strong> ✅</span>
+            </div>
+          </div>
+          <div class="mt-3 text-xs opacity-80">
+            Dann findest du die App auf deinem Homescreen! 🎉
           </div>
         </div>
         <button
           (click)="dismissIosPrompt()"
-          class="text-white/80 hover:text-white text-sm px-2">
+          class="text-white/80 hover:text-white text-lg px-2">
           ✕
         </button>
       </div>
@@ -66,6 +90,13 @@ import { PwaService } from '../../services/pwa.service';
         <div class="text-sm">Offline-Modus aktiv - Daten werden lokal gespeichert</div>
       </div>
     </div>
+
+    <!-- Debug Button -->
+    <button
+      (click)="toggleDebug()"
+      class="fixed top-4 right-4 bg-red-500 text-white p-2 rounded text-xs z-50">
+      Debug
+    </button>
   `
 })
 export class InstallPromptComponent implements OnInit {
@@ -73,21 +104,43 @@ export class InstallPromptComponent implements OnInit {
 
   showInstallPrompt = false;
   showIosPrompt = false;
+  showDebugInfo = false;
   isOnline = true;
+  isIOS = false;
+  isStandalone = false;
+  canInstall = false;
+  userAgent = '';
 
   ngOnInit(): void {
+    this.detectPlatform();
     this.checkInstallability();
     this.checkNetworkStatus();
+  }
+
+  private detectPlatform(): void {
+    this.isIOS = this.pwaService.isIOSDevice();
+    this.isStandalone = this.pwaService.isStandalone();
+    this.canInstall = this.pwaService.canInstall();
+    this.userAgent = navigator.userAgent;
+
+    console.log('PWA Debug:', {
+      isIOS: this.isIOS,
+      isStandalone: this.isStandalone,
+      canInstall: this.canInstall,
+      userAgent: this.userAgent
+    });
   }
 
   private checkInstallability(): void {
     // Warte 3 Sekunden, dann prüfe ob installierbar
     setTimeout(() => {
-      if (this.pwaService.canInstall() && !this.pwaService.isStandalone()) {
-        if (this.pwaService.isIOSDevice()) {
+      if (!this.isStandalone) { // Nicht im App-Modus
+        if (this.isIOS) {
           this.showIosPrompt = true;
-        } else {
+          console.log('Showing iOS install prompt');
+        } else if (this.canInstall) {
           this.showInstallPrompt = true;
+          console.log('Showing Android install prompt');
         }
       }
     }, 3000);
@@ -119,5 +172,10 @@ export class InstallPromptComponent implements OnInit {
 
   dismissIosPrompt(): void {
     this.showIosPrompt = false;
+    localStorage.setItem('iosInstallPromptDismissed', Date.now().toString());
+  }
+
+  toggleDebug(): void {
+    this.showDebugInfo = !this.showDebugInfo;
   }
 }
