@@ -1,7 +1,8 @@
 // src/app/components/install-prompt/install-prompt.component.ts
 
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { PwaService } from '../../services/pwa.service';
 
 @Component({
   selector: 'app-install-prompt',
@@ -56,66 +57,64 @@ import { CommonModule } from '@angular/common';
         </button>
       </div>
     </div>
+
+    <!-- Offline-Indicator -->
+    <div *ngIf="!isOnline"
+         class="fixed top-4 left-4 right-4 bg-gray-800 text-white p-3 rounded-lg shadow-lg z-50">
+      <div class="flex items-center space-x-2">
+        <div class="text-lg">📶</div>
+        <div class="text-sm">Offline-Modus aktiv - Daten werden lokal gespeichert</div>
+      </div>
+    </div>
   `
 })
 export class InstallPromptComponent implements OnInit {
+  private pwaService = inject(PwaService);
+
   showInstallPrompt = false;
   showIosPrompt = false;
-  private deferredPrompt: any;
+  isOnline = true;
 
   ngOnInit(): void {
-    this.setupInstallPrompt();
-    this.detectiOS();
+    this.checkInstallability();
+    this.checkNetworkStatus();
   }
 
-  private setupInstallPrompt(): void {
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      this.deferredPrompt = e;
-
-      // Warte 3 Sekunden, dann zeige Prompt
-      setTimeout(() => {
-        this.showInstallPrompt = true;
-      }, 3000);
-    });
-
-    // App wurde installiert
-    window.addEventListener('appinstalled', () => {
-      this.showInstallPrompt = false;
-      console.log('PWA wurde installiert! 🎉');
-    });
-  }
-
-  private detectiOS(): void {
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const isStandalone = (window.navigator as any).standalone;
-
-    if (isIOS && !isStandalone) {
-      setTimeout(() => {
-        this.showIosPrompt = true;
-      }, 5000);
-    }
-  }
-
-  installApp(): void {
-    if (this.deferredPrompt) {
-      this.deferredPrompt.prompt();
-
-      this.deferredPrompt.userChoice.then((choiceResult: any) => {
-        if (choiceResult.outcome === 'accepted') {
-          console.log('User installierte die App');
+  private checkInstallability(): void {
+    // Warte 3 Sekunden, dann prüfe ob installierbar
+    setTimeout(() => {
+      if (this.pwaService.canInstall() && !this.pwaService.isStandalone()) {
+        if (this.pwaService.isIOSDevice()) {
+          this.showIosPrompt = true;
+        } else {
+          this.showInstallPrompt = true;
         }
-        this.deferredPrompt = null;
-        this.showInstallPrompt = false;
-      });
+      }
+    }, 3000);
+  }
+
+  private checkNetworkStatus(): void {
+    this.isOnline = this.pwaService.isOnline();
+
+    // Online/Offline Events
+    window.addEventListener('online', () => {
+      this.isOnline = true;
+    });
+
+    window.addEventListener('offline', () => {
+      this.isOnline = false;
+    });
+  }
+
+  async installApp(): Promise<void> {
+    const success = await this.pwaService.installPWA();
+    if (success) {
+      this.showInstallPrompt = false;
     }
   }
 
   dismissPrompt(): void {
     this.showInstallPrompt = false;
-    // Zeige 24h lang nicht mehr
-    localStorage.setItem('installPromptDismissed',
-      (Date.now() + 24 * 60 * 60 * 1000).toString());
   }
 
   dismissIosPrompt(): void {
