@@ -1,0 +1,208 @@
+<!-- src/app/components/trigger-form/trigger-form.component.html -->
+
+<div class="form-container">
+  <div class="header">
+    <h1>Trigger-Tagebuch Eintrag</h1>
+    <button class="btn-secondary" (click)="goToDashboard()">
+      Zum Dashboard
+    </button>
+  </div>
+
+  <div *ngIf="showSuccess" class="success-message">
+    ✓ Eintrag erfolgreich gespeichert!
+  </div>
+
+  <form [formGroup]="triggerForm" (ngSubmit)="onSubmit()">
+
+    <!-- Datum & Zeit -->
+    <div class="form-section">
+      <h2>Wann?</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="date">Datum *</label>
+          <input type="date" id="date" formControlName="date" class="form-control">
+        </div>
+        <div class="form-group">
+          <label for="time">Uhrzeit *</label>
+          <input type="time" id="time" formControlName="time" class="form-control">
+        </div>
+      </div>
+      <button type="button" class="btn-now" (click)="setNow()">
+        🕐 Jetzt
+      </button>
+    </div>
+
+    <!-- Intensität -->
+    <div class="form-section">
+      <h2>Intensität</h2>
+      <div class="form-group">
+        <label for="intensity">
+          Intensität des Cravings (1-10) *:
+          <strong>{{ triggerForm.get('intensity')?.value }}</strong>
+        </label>
+        <input
+          type="range"
+          id="intensity"
+          formControlName="intensity"
+          min="1"
+          max="10"
+          class="slider">
+        <div class="slider-labels">
+          <span>1 (leicht)</span>
+          <span>10 (sehr stark)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Situation -->
+    <div class="form-section">
+      <h2>Situation & Ort</h2>
+      <div class="form-group">
+        <label for="location">Wo war ich? *</label>
+        <input type="text" id="location" formControlName="location"
+               class="form-control" placeholder="z.B. Zuhause, Büro, unterwegs">
+      </div>
+      <div class="form-group">
+        <label for="activity">Was habe ich gerade gemacht? *</label>
+        <input type="text" id="activity" formControlName="activity"
+               class="form-control" placeholder="z.B. Fernsehen, Arbeiten, Entspannen">
+      </div>
+      <div class="form-group">
+        <label for="withWhom">Mit wem war ich zusammen?</label>
+        <input type="text" id="withWhom" formControlName="withWhom"
+               class="form-control" placeholder="z.B. Alleine, mit Freunden">
+      </div>
+    </div>
+
+    <!-- Emotionaler Zustand -->
+    <div class="form-section">
+      <h2>Emotionaler Zustand *</h2>
+      <div class="checkbox-grid">
+        <div *ngFor="let emotion of emotionOptions" class="checkbox-item">
+          <input
+            type="checkbox"
+            [id]="'emotion-' + emotion"
+            [checked]="triggerForm.get('emotions')?.value?.includes(emotion)"
+            (change)="onEmotionChange(emotion, $any($event.target).checked)">
+          <label [for]="'emotion-' + emotion">{{ emotion }}</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="otherEmotion">Anderes (bitte beschreiben):</label>
+        <input type="text" id="otherEmotion" formControlName="otherEmotion"
+               class="form-control" placeholder="Weitere Emotion">
+      </div>
+    </div>
+
+    <!-- Körperliche Signale -->
+    <div class="form-section">
+      <h2>Körperliche Signale</h2>
+      <div class="form-group">
+        <label for="physicalSensations">Wo und wie habe ich es im Körper gespürt? *</label>
+        <textarea id="physicalSensations" formControlName="physicalSensations"
+                  class="form-control" rows="3"
+                  placeholder="z.B. Kribbeln in den Händen, Anspannung in der Brust, Unruhe in den Beinen"></textarea>
+      </div>
+    </div>
+
+    <!-- Auslöser -->
+    <div class="form-section">
+      <h2>Auslöser</h2>
+      <div class="form-group">
+        <label for="trigger">Was war der Auslöser? *</label>
+        <textarea id="trigger" formControlName="trigger"
+                  class="form-control" rows="3"
+                  placeholder="Beschreibe die Situation, die das Craving ausgelöst hat"></textarea>
+      </div>
+    </div>
+
+    <!-- Bewältigungsstrategie -->
+    <div class="form-section">
+      <h2>Bewältigungsstrategie *</h2>
+      <div class="checkbox-grid">
+        <div *ngFor="let strategy of copingStrategyOptions" class="checkbox-item">
+          <input
+            type="checkbox"
+            [id]="'strategy-' + strategy"
+            [checked]="triggerForm.get('copingStrategy')?.value?.includes(strategy)"
+            (change)="onCopingStrategyChange(strategy, $any($event.target).checked)">
+          <label [for]="'strategy-' + strategy">{{ strategy }}</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="copingDetails">Details zur Bewältigung:</label>
+        <textarea id="copingDetails" formControlName="copingDetails"
+                  class="form-control" rows="3"
+                  placeholder="Welche Techniken hast du genau angewendet?"></textarea>
+      </div>
+    </div>
+
+    <!-- Ergebnis -->
+    <div class="form-section">
+      <h2>Ergebnis *</h2>
+      <div class="radio-group">
+        <div class="radio-item">
+          <input type="radio" id="success" value="success" formControlName="outcome">
+          <label for="success">✓ Craving erfolgreich überstanden</label>
+        </div>
+        <div class="radio-item">
+          <input type="radio" id="partial" value="partial" formControlName="outcome">
+          <label for="partial">~ Teilweise erfolgreich</label>
+        </div>
+        <div class="radio-item">
+          <input type="radio" id="relapse" value="relapse" formControlName="outcome">
+          <label for="relapse">✗ Dem Craving nachgegeben</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Was hat geholfen -->
+    <div class="form-section">
+      <h2>Reflexion</h2>
+      <div class="form-group">
+        <label for="whatHelped">Was hat geholfen?</label>
+        <textarea id="whatHelped" formControlName="whatHelped"
+                  class="form-control" rows="3"
+                  placeholder="Welche Strategien waren besonders wirksam?"></textarea>
+      </div>
+      <div class="form-group">
+        <label for="whatDidntHelp">Was hat NICHT geholfen?</label>
+        <textarea id="whatDidntHelp" formControlName="whatDidntHelp"
+                  class="form-control" rows="3"
+                  placeholder="Was würdest du beim nächsten Mal anders machen?"></textarea>
+      </div>
+    </div>
+
+    <!-- Dauer -->
+    <div class="form-section">
+      <h2>Dauer</h2>
+      <div class="form-group">
+        <label for="duration">Wie lange dauerte das Craving insgesamt? (Minuten) *</label>
+        <input type="number" id="duration" formControlName="duration"
+               class="form-control" min="0" placeholder="z.B. 20">
+      </div>
+    </div>
+
+    <!-- Notizen -->
+    <div class="form-section">
+      <h2>Notizen</h2>
+      <div class="form-group">
+        <label for="notes">Weitere Notizen & Erkenntnisse</label>
+        <textarea id="notes" formControlName="notes"
+                  class="form-control" rows="4"
+                  placeholder="Was möchtest du noch festhalten?"></textarea>
+      </div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="form-actions">
+      <button type="button" class="btn-secondary" (click)="resetForm()">
+        Formular zurücksetzen
+      </button>
+      <button type="submit" class="btn-primary" [disabled]="!triggerForm.valid">
+        Eintrag speichern
+      </button>
+    </div>
+
+  </form>
+</div>

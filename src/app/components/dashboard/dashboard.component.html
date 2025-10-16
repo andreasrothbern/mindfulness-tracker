@@ -1,0 +1,320 @@
+<!-- src/app/components/dashboard/dashboard.component.html -->
+
+<div class="dashboard-container">
+  <div class="header">
+    <h1>📊 Dashboard</h1>
+    <div class="header-actions">
+      <button class="btn-report" (click)="goToReport()">📈 Bericht</button>
+      <button class="btn-secondary" (click)="exportData()">Export</button>
+      <label class="btn-secondary import-btn">
+        Import
+        <input type="file" accept=".json" (change)="importData($event)" hidden>
+      </label>
+      <div class="entry-options">
+        <button class="btn-primary" (click)="goToWizard()">✨ Wizard</button>
+        <button class="btn-primary-outline" (click)="goToForm()">📝 Formular</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Time Range Selector -->
+  <div class="time-range-selector">
+    <button
+      [class.active]="timeRange() === 'week'"
+      (click)="setTimeRange('week')">
+      Letzte Woche
+    </button>
+    <button
+      [class.active]="timeRange() === 'month'"
+      (click)="setTimeRange('month')">
+      Letzter Monat
+    </button>
+    <button
+      [class.active]="timeRange() === 'all'"
+      (click)="setTimeRange('all')">
+      Alle Einträge
+    </button>
+  </div>
+
+  <!-- Streak Widget -->
+  <div class="streak-widget">
+    <div class="streak-card current">
+      <div class="streak-icon">🔥</div>
+      <div class="streak-content">
+        <div class="streak-value">{{ currentStreak() }}</div>
+        <div class="streak-label">Aktueller Streak</div>
+      </div>
+    </div>
+    <div class="streak-card best">
+      <div class="streak-icon">🏆</div>
+      <div class="streak-content">
+        <div class="streak-value">{{ longestStreak() }}</div>
+        <div class="streak-label">Bester Streak</div>
+      </div>
+    </div>
+    <div class="streak-card motivation" *ngIf="currentStreak() >= 3">
+      <div class="motivation-text">
+        <span *ngIf="currentStreak() >= 7">🎉 Eine Woche geschafft! Großartig!</span>
+        <span *ngIf="currentStreak() >= 3 && currentStreak() < 7">💪 Du bist auf einem guten Weg!</span>
+        <span *ngIf="currentStreak() >= 14">🌟 Zwei Wochen Streak! Unglaublich!</span>
+        <span *ngIf="currentStreak() >= 30">👑 Ein Monat! Du bist ein Champion!</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistics Overview -->
+  <div class="stats-grid">
+    <div class="stat-card primary">
+      <div class="stat-value">{{ stats().totalCravings }}</div>
+      <div class="stat-label">Gesamte Cravings</div>
+    </div>
+
+    <div class="stat-card success">
+      <div class="stat-value">{{ stats().successfullyManaged }}</div>
+      <div class="stat-label">Erfolgreich bewältigt</div>
+    </div>
+
+    <div class="stat-card percentage">
+      <div class="stat-value">{{ stats().successRate }}%</div>
+      <div class="stat-label">Erfolgsquote</div>
+    </div>
+
+    <div class="stat-card info">
+      <div class="stat-value">{{ stats().averageIntensity }}/10</div>
+      <div class="stat-label">Durchschn. Intensität</div>
+    </div>
+
+    <div class="stat-card warning">
+      <div class="stat-value">{{ stats().averageDuration }} Min</div>
+      <div class="stat-label">Durchschn. Dauer</div>
+    </div>
+  </div>
+
+  <!-- Insights Section -->
+  <div class="insights-section">
+    <!-- Most Common Triggers -->
+    <div class="insight-card" *ngIf="stats().mostCommonTriggers.length > 0">
+      <h2>🎯 Häufigste Trigger</h2>
+      <div class="insight-list">
+        <div *ngFor="let trigger of stats().mostCommonTriggers" class="insight-item">
+          <div class="insight-bar">
+            <div class="insight-bar-fill"
+                 [style.width.%]="(trigger.count / stats().totalCravings) * 100"></div>
+          </div>
+          <div class="insight-details">
+            <span class="insight-text">{{ trigger.trigger }}</span>
+            <span class="insight-count">{{ trigger.count }}x</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Most Common Emotions -->
+    <div class="insight-card" *ngIf="stats().mostCommonEmotions.length > 0">
+      <h2>😔 Häufigste Emotionen</h2>
+      <div class="insight-list">
+        <div *ngFor="let emotion of stats().mostCommonEmotions" class="insight-item">
+          <div class="insight-bar">
+            <div class="insight-bar-fill emotion"
+                 [style.width.%]="(emotion.count / stats().totalCravings) * 100"></div>
+          </div>
+          <div class="insight-details">
+            <span class="insight-text">{{ emotion.emotion }}</span>
+            <span class="insight-count">{{ emotion.count }}x</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Time Slots -->
+    <div class="insight-card" *ngIf="stats().mostCommonTimes.length > 0">
+      <h2>⏰ Häufigste Zeiten</h2>
+      <div class="insight-list">
+        <div *ngFor="let time of stats().mostCommonTimes" class="insight-item">
+          <div class="insight-bar">
+            <div class="insight-bar-fill time"
+                 [style.width.%]="(time.count / stats().totalCravings) * 100"></div>
+          </div>
+          <div class="insight-details">
+            <span class="insight-text">{{ time.timeSlot }}</span>
+            <span class="insight-count">{{ time.count }}x</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Best Coping Strategies -->
+    <div class="insight-card" *ngIf="stats().bestCopingStrategies.length > 0">
+      <h2>💪 Wirksamste Strategien</h2>
+      <div class="insight-list">
+        <div *ngFor="let strategy of stats().bestCopingStrategies" class="insight-item">
+          <div class="insight-bar">
+            <div class="insight-bar-fill strategy"
+                 [style.width.%]="strategy.successRate"></div>
+          </div>
+          <div class="insight-details">
+            <span class="insight-text">{{ strategy.strategy }}</span>
+            <span class="insight-count">{{ strategy.successRate }}%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Entries -->
+  <div class="entries-section">
+    <div class="section-header">
+      <h2>Letzte Einträge</h2>
+
+      <!-- Search & Filter Bar -->
+      <div class="filter-bar">
+        <div class="search-box">
+          <input
+            type="text"
+            [(ngModel)]="searchQuery"
+            [ngModelOptions]="{updateOn: 'change'}"
+            placeholder="🔍 Suchen..."
+            class="search-input">
+        </div>
+
+        <select [(ngModel)]="filterEmotion" class="filter-select">
+          <option value="all">Alle Emotionen</option>
+          <option *ngFor="let emotion of emotionOptions.slice(1)" [value]="emotion">
+            {{ emotion }}
+          </option>
+        </select>
+
+        <select [(ngModel)]="filterOutcome" class="filter-select">
+          <option *ngFor="let opt of outcomeOptions" [value]="opt.value">
+            {{ opt.label }}
+          </option>
+        </select>
+
+        <select [(ngModel)]="sortBy" class="filter-select">
+          <option value="date">Nach Datum</option>
+          <option value="intensity">Nach Intensität</option>
+          <option value="duration">Nach Dauer</option>
+        </select>
+
+        <button
+          class="sort-order-btn"
+          (click)="sortOrder.set(sortOrder() === 'desc' ? 'asc' : 'desc')"
+          [title]="sortOrder() === 'desc' ? 'Absteigend' : 'Aufsteigend'">
+          <span *ngIf="sortOrder() === 'desc'">↓</span>
+          <span *ngIf="sortOrder() === 'asc'">↑</span>
+        </button>
+
+        <button
+          *ngIf="hasActiveFilters()"
+          class="clear-filters-btn"
+          (click)="clearFilters()">
+          ✕ Filter löschen
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="filteredEntries().length === 0" class="empty-state">
+      <p *ngIf="!hasActiveFilters()">Noch keine Einträge vorhanden.</p>
+      <p *ngIf="hasActiveFilters()">Keine Einträge gefunden. Versuche andere Filter.</p>
+      <button class="btn-primary" (click)="goToForm()" *ngIf="!hasActiveFilters()">
+        Ersten Eintrag erstellen
+      </button>
+    </div>
+
+    <div class="entries-list" *ngIf="filteredEntries().length > 0">
+      <div *ngFor="let entry of filteredEntries()"
+           class="entry-card"
+           [class.expanded]="isExpanded(entry.id)"
+           [class.quick-entry]="isQuickEntry(entry)">
+
+        <!-- Entry Header (Always Visible) -->
+        <div class="entry-header" (click)="toggleExpand(entry.id)">
+          <div class="entry-left">
+            <div class="entry-date">
+              <span class="date">{{ entry.date }}</span>
+              <span class="time">{{ entry.time }}</span>
+            </div>
+            <div class="entry-badges">
+              <span class="badge quick" *ngIf="isQuickEntry(entry)" title="Schnellerfassung - zum Vervollständigen klicken">
+                ⚡ Unvollständig
+              </span>
+              <span class="outcome-badge" [ngClass]="getOutcomeClass(entry.outcome)">
+                {{ getOutcomeText(entry.outcome) }}
+              </span>
+            </div>
+          </div>
+          <div class="entry-right">
+            <div class="entry-intensity">
+              <span class="intensity-label">Intensität:</span>
+              <span class="intensity-value">{{ entry.intensity }}/10</span>
+            </div>
+            <button class="expand-btn">
+              <span *ngIf="!isExpanded(entry.id)">▼</span>
+              <span *ngIf="isExpanded(entry.id)">▲</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Entry Body (Expandable) -->
+        <div class="entry-body" *ngIf="isExpanded(entry.id)">
+          <div class="entry-row">
+            <strong>📍 Ort:</strong> {{ entry.location }}
+          </div>
+          <div class="entry-row">
+            <strong>🎯 Aktivität:</strong> {{ entry.activity }}
+          </div>
+          <div class="entry-row" *ngIf="entry.withWhom">
+            <strong>👥 Mit wem:</strong> {{ entry.withWhom }}
+          </div>
+          <div class="entry-row">
+            <strong>💭 Emotionen:</strong> {{ entry.emotions.join(', ') }}
+          </div>
+          <div class="entry-row">
+            <strong>🫀 Körperlich:</strong> {{ entry.physicalSensations }}
+          </div>
+          <div class="entry-row">
+            <strong>⚠️ Trigger:</strong> {{ entry.trigger }}
+          </div>
+          <div class="entry-row">
+            <strong>💪 Strategie:</strong> {{ entry.copingStrategy.join(', ') }}
+          </div>
+          <div class="entry-row" *ngIf="entry.copingDetails">
+            <strong>📝 Details:</strong> {{ entry.copingDetails }}
+          </div>
+          <div class="entry-row">
+            <strong>⏱️ Dauer:</strong> {{ entry.duration }} Minuten
+          </div>
+          <div class="entry-row" *ngIf="entry.whatHelped">
+            <strong>✅ Geholfen:</strong> {{ entry.whatHelped }}
+          </div>
+          <div class="entry-row" *ngIf="entry.whatDidntHelp">
+            <strong>❌ Nicht geholfen:</strong> {{ entry.whatDidntHelp }}
+          </div>
+          <div class="entry-row" *ngIf="entry.notes">
+            <strong>📋 Notizen:</strong> {{ entry.notes }}
+          </div>
+        </div>
+
+        <!-- Entry Footer (Expandable) -->
+        <div class="entry-footer" *ngIf="isExpanded(entry.id)">
+          <button class="btn-edit" (click)="editEntry(entry)">
+            ✏️ Bearbeiten
+          </button>
+          <button class="btn-delete" (click)="deleteEntry(entry.id)">
+            🗑️ Löschen
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Entry Component -->
+<app-quick-entry></app-quick-entry>
+
+<!-- Edit Entry Component -->
+<app-edit-entry
+  [entry]="entryToEdit()"
+  (save)="onEntrySaved($event)"
+  (close)="onEditClosed()">
+</app-edit-entry>

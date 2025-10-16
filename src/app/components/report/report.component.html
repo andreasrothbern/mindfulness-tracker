@@ -1,0 +1,191 @@
+<!-- src/app/components/report/report.component.html -->
+
+<div class="report-container">
+
+  <!-- Header -->
+  <div class="report-header">
+    <button class="back-btn" (click)="goToDashboard()">← Dashboard</button>
+    <h1>📊 Zusammenfassung</h1>
+    <div class="report-actions">
+      <button class="btn-action" (click)="printReport()" title="Drucken">
+        🖨️
+      </button>
+      <button class="btn-action" (click)="exportReport()" title="Als Text exportieren">
+        📥
+      </button>
+    </div>
+  </div>
+
+  <!-- Period Selector -->
+  <div class="period-selector">
+    <button
+      [class.active]="reportType() === 'week'"
+      (click)="setReportType('week')">
+      📅 Wochenbericht
+    </button>
+    <button
+      [class.active]="reportType() === 'month'"
+      (click)="setReportType('month')">
+      📆 Monatsbericht
+    </button>
+  </div>
+
+  <!-- Period Display -->
+  <div class="period-display">
+    <div class="period-label">Zeitraum</div>
+    <div class="period-value">{{ reportData().period }}</div>
+  </div>
+
+  <!-- Statistics Overview -->
+  <div class="stats-overview">
+    <div class="stat-card primary">
+      <div class="stat-icon">📊</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ reportData().stats.totalCravings }}</div>
+        <div class="stat-label">Cravings</div>
+      </div>
+    </div>
+
+    <div class="stat-card success">
+      <div class="stat-icon">✓</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ reportData().stats.successfullyManaged }}</div>
+        <div class="stat-label">Erfolgreich</div>
+      </div>
+    </div>
+
+    <div class="stat-card percentage">
+      <div class="stat-icon">🎯</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ reportData().stats.successRate }}%</div>
+        <div class="stat-label">Erfolgsquote</div>
+      </div>
+    </div>
+
+    <div class="stat-card intensity">
+      <div class="stat-icon">📈</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ reportData().stats.averageIntensity }}/10</div>
+        <div class="stat-label">Ø Intensität</div>
+      </div>
+    </div>
+
+    <div class="stat-card duration">
+      <div class="stat-icon">⏱️</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ reportData().stats.averageDuration }}</div>
+        <div class="stat-label">Ø Minuten</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Highlights -->
+  <div class="section highlights-section">
+    <h2>✨ Highlights</h2>
+    <div class="highlights-grid">
+      <div class="highlight-card best">
+        <div class="highlight-icon">🌟</div>
+        <div class="highlight-label">Bester Tag</div>
+        <div class="highlight-value">{{ reportData().highlights.bestDay }}</div>
+      </div>
+
+      <div class="highlight-card worst">
+        <div class="highlight-icon">💪</div>
+        <div class="highlight-label">Schwierigster Tag</div>
+        <div class="highlight-value">{{ reportData().highlights.worstDay }}</div>
+      </div>
+
+      <div class="highlight-card time">
+        <div class="highlight-icon">⏰</div>
+        <div class="highlight-label">Häufigste Zeit</div>
+        <div class="highlight-value">{{ reportData().highlights.mostCommonTime }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Triggers -->
+  <div class="section" *ngIf="reportData().stats.mostCommonTriggers.length > 0">
+    <h2>🎯 Häufigste Trigger</h2>
+    <div class="rank-list">
+      <div *ngFor="let trigger of reportData().stats.mostCommonTriggers.slice(0, 5); let i = index"
+           class="rank-item">
+        <div class="rank-number">{{ i + 1 }}</div>
+        <div class="rank-content">
+          <div class="rank-name">{{ trigger.trigger }}</div>
+          <div class="rank-bar">
+            <div class="rank-bar-fill"
+                 [style.width.%]="(trigger.count / reportData().stats.totalCravings) * 100"></div>
+          </div>
+        </div>
+        <div class="rank-count">{{ trigger.count }}x</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Emotions -->
+  <div class="section" *ngIf="reportData().stats.mostCommonEmotions.length > 0">
+    <h2>💭 Häufigste Emotionen</h2>
+    <div class="rank-list">
+      <div *ngFor="let emotion of reportData().stats.mostCommonEmotions.slice(0, 5); let i = index"
+           class="rank-item">
+        <div class="rank-number">{{ i + 1 }}</div>
+        <div class="rank-content">
+          <div class="rank-name">{{ emotion.emotion }}</div>
+          <div class="rank-bar">
+            <div class="rank-bar-fill emotion"
+                 [style.width.%]="(emotion.count / reportData().stats.totalCravings) * 100"></div>
+          </div>
+        </div>
+        <div class="rank-count">{{ emotion.count }}x</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Best Strategies -->
+  <div class="section" *ngIf="reportData().stats.bestCopingStrategies.length > 0">
+    <h2>💪 Wirksamste Strategien</h2>
+    <div class="rank-list">
+      <div *ngFor="let strategy of reportData().stats.bestCopingStrategies.slice(0, 5); let i = index"
+           class="rank-item strategy">
+        <div class="rank-number">{{ i + 1 }}</div>
+        <div class="rank-content">
+          <div class="rank-name">{{ strategy.strategy }}</div>
+          <div class="rank-bar">
+            <div class="rank-bar-fill strategy"
+                 [style.width.%]="strategy.successRate"></div>
+          </div>
+        </div>
+        <div class="rank-count success">{{ strategy.successRate }}%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Insights -->
+  <div class="section insights-section">
+    <h2>💡 Erkenntnisse</h2>
+    <div class="insight-list">
+      <div *ngFor="let insight of reportData().insights" class="insight-item">
+        <div class="insight-bullet">→</div>
+        <div class="insight-text">{{ insight }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recommendations -->
+  <div class="section recommendations-section">
+    <h2>🎯 Empfehlungen</h2>
+    <div class="recommendation-list">
+      <div *ngFor="let recommendation of reportData().recommendations" class="recommendation-item">
+        <div class="recommendation-number">✓</div>
+        <div class="recommendation-text">{{ recommendation }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="report-footer">
+    <p>Erstellt am {{ getCurrentDate() }}</p>
+    <p class="motivation">💪 Du bist auf dem richtigen Weg. Weiter so!</p>
+  </div>
+
+</div>

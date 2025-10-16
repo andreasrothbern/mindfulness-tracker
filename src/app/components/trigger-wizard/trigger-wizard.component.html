@@ -1,0 +1,350 @@
+<!-- src/app/components/trigger-wizard/trigger-wizard.component.html -->
+
+<div class="wizard-container">
+
+  <!-- Celebration Animation -->
+  <app-celebration
+    [trigger]="celebrate()"
+    [streakValue]="currentStreak()">
+  </app-celebration>
+
+  <!-- Template Selection (Before Step 1) -->
+  <div class="template-selection" *ngIf="showTemplates()">
+    <div class="template-header">
+      <h2>✨ Schnell starten mit Vorlage</h2>
+      <button class="skip-btn" (click)="showTemplates.set(false)">
+        Vorlage überspringen →
+      </button>
+    </div>
+
+    <div class="templates-grid">
+      <div *ngFor="let template of templates()"
+           class="template-card"
+           (click)="useTemplate(template.id)">
+        <div class="template-emoji">{{ template.emoji }}</div>
+        <div class="template-name">{{ template.name }}</div>
+        <div class="template-preview">{{ template.trigger }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Wizard Content (When not showing templates) -->
+  <div class="wizard-content" *ngIf="!showTemplates()">
+
+    <!-- Success Message -->
+    <div class="success-message" *ngIf="showSuccess()">
+      ✓ Eintrag erfolgreich gespeichert!
+    </div>
+
+    <!-- Header -->
+    <div class="wizard-header">
+      <h1>Trigger-Erfassung</h1>
+      <button class="cancel-btn" (click)="cancel()">✕</button>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="progress-container">
+      <div class="progress-bar">
+        <div class="progress-fill" [style.width.%]="getProgress()"></div>
+      </div>
+      <div class="progress-text">Schritt {{ currentStep() }} von {{ totalSteps }}</div>
+    </div>
+
+    <!-- Step Indicators -->
+    <div class="step-indicators">
+      <div
+        *ngFor="let step of [1, 2, 3, 4, 5]"
+        class="step-indicator"
+        [class.active]="currentStep() === step"
+        [class.completed]="currentStep() > step"
+        [class.clickable]="step <= currentStep()"
+        (click)="goToStep(step)">
+        <div class="step-number">{{ step }}</div>
+        <div class="step-label">
+          <span *ngIf="step === 1">Basics</span>
+          <span *ngIf="step === 2">Situation</span>
+          <span *ngIf="step === 3">Emotionen</span>
+          <span *ngIf="step === 4">Trigger</span>
+          <span *ngIf="step === 5">Reflexion</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form -->
+    <form [formGroup]="triggerForm" (ngSubmit)="onSubmit()">
+
+      <!-- Step 1: Basics -->
+      <div class="wizard-step" *ngIf="currentStep() === 1">
+        <h2>⚡ Basics</h2>
+        <p class="step-description">Wann ist das Craving aufgetreten?</p>
+
+        <div class="form-group">
+          <label for="date">Datum *</label>
+          <input type="date" id="date" formControlName="date" class="form-control">
+        </div>
+
+        <div class="form-group">
+          <label for="time">Uhrzeit *</label>
+          <input type="time" id="time" formControlName="time" class="form-control">
+        </div>
+
+        <button type="button" class="btn-now" (click)="setNow()">
+          🕐 Jetzt
+        </button>
+
+        <div class="form-group">
+          <label for="intensity">
+            Intensität des Cravings *:
+            <strong>{{ triggerForm.get('intensity')?.value }}/10</strong>
+          </label>
+          <input
+            type="range"
+            id="intensity"
+            formControlName="intensity"
+            min="1"
+            max="10"
+            class="slider">
+          <div class="slider-labels">
+            <span>1 (leicht)</span>
+            <span>10 (sehr stark)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Situation -->
+      <div class="wizard-step" *ngIf="currentStep() === 2">
+        <h2>📍 Situation & Ort</h2>
+        <p class="step-description">Wo warst du und was hast du gemacht?</p>
+
+        <div class="form-group">
+          <label for="location">Wo warst du? *</label>
+
+          <!-- Autocomplete Suggestions -->
+          <div class="suggestion-chips" *ngIf="locationSuggestions().length > 0">
+            <button
+              type="button"
+              *ngFor="let suggestion of locationSuggestions()"
+              class="suggestion-chip"
+              (click)="useSuggestion('location', suggestion)">
+              📍 {{ suggestion }}
+            </button>
+          </div>
+
+          <input
+            type="text"
+            id="location"
+            formControlName="location"
+            class="form-control"
+            placeholder="z.B. Zuhause, Büro, unterwegs">
+        </div>
+
+        <div class="form-group">
+          <label for="activity">Was hast du gerade gemacht? *</label>
+
+          <!-- Autocomplete Suggestions -->
+          <div class="suggestion-chips" *ngIf="activitySuggestions().length > 0">
+            <button
+              type="button"
+              *ngFor="let suggestion of activitySuggestions()"
+              class="suggestion-chip"
+              (click)="useSuggestion('activity', suggestion)">
+              🎯 {{ suggestion }}
+            </button>
+          </div>
+
+          <input
+            type="text"
+            id="activity"
+            formControlName="activity"
+            class="form-control"
+            placeholder="z.B. Fernsehen, Arbeiten, Entspannen">
+        </div>
+
+        <div class="form-group">
+          <label for="withWhom">Mit wem warst du zusammen?</label>
+          <input
+            type="text"
+            id="withWhom"
+            formControlName="withWhom"
+            class="form-control"
+            placeholder="z.B. Alleine, mit Freunden (optional)">
+        </div>
+      </div>
+
+      <!-- Step 3: Emotions -->
+      <div class="wizard-step" *ngIf="currentStep() === 3">
+        <h2>💭 Emotionen & Körper</h2>
+        <p class="step-description">Wie hast du dich gefühlt?</p>
+
+        <div class="form-group">
+          <label>Emotionaler Zustand * (mehrere möglich)</label>
+          <div class="checkbox-grid">
+            <div *ngFor="let emotion of emotionOptions" class="checkbox-item">
+              <input
+                type="checkbox"
+                [id]="'emotion-' + emotion"
+                [checked]="triggerForm.get('emotions')?.value?.includes(emotion)"
+                (change)="onEmotionChange(emotion, $any($event.target).checked)">
+              <label [for]="'emotion-' + emotion">{{ emotion }}</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="otherEmotion">Andere Emotion</label>
+          <input
+            type="text"
+            id="otherEmotion"
+            formControlName="otherEmotion"
+            class="form-control"
+            placeholder="Weitere Emotion (optional)">
+        </div>
+
+        <div class="form-group">
+          <label for="physicalSensations">Körperliche Signale *</label>
+          <textarea
+            id="physicalSensations"
+            formControlName="physicalSensations"
+            class="form-control"
+            rows="3"
+            placeholder="Wo und wie hast du es im Körper gespürt? z.B. Kribbeln in den Händen, Anspannung in der Brust"></textarea>
+        </div>
+      </div>
+
+      <!-- Step 4: Trigger & Coping -->
+      <div class="wizard-step" *ngIf="currentStep() === 4">
+        <h2>🎯 Trigger & Bewältigung</h2>
+        <p class="step-description">Was war der Auslöser und wie hast du reagiert?</p>
+
+        <div class="form-group">
+          <label for="trigger">Was war der Auslöser? *</label>
+          <textarea
+            id="trigger"
+            formControlName="trigger"
+            class="form-control"
+            rows="3"
+            placeholder="Beschreibe die Situation, die das Craving ausgelöst hat"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Bewältigungsstrategie * (mehrere möglich)</label>
+          <div class="checkbox-grid">
+            <div *ngFor="let strategy of copingStrategyOptions" class="checkbox-item">
+              <input
+                type="checkbox"
+                [id]="'strategy-' + strategy"
+                [checked]="triggerForm.get('copingStrategy')?.value?.includes(strategy)"
+                (change)="onCopingStrategyChange(strategy, $any($event.target).checked)">
+              <label [for]="'strategy-' + strategy">{{ strategy }}</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="copingDetails">Details zur Bewältigung</label>
+          <textarea
+            id="copingDetails"
+            formControlName="copingDetails"
+            class="form-control"
+            rows="3"
+            placeholder="Welche Techniken hast du genau angewendet? (optional)"></textarea>
+        </div>
+      </div>
+
+      <!-- Step 5: Reflection -->
+      <div class="wizard-step" *ngIf="currentStep() === 5">
+        <h2>✨ Reflexion & Ergebnis</h2>
+        <p class="step-description">Wie ist es ausgegangen?</p>
+
+        <div class="form-group">
+          <label>Ergebnis *</label>
+          <div class="radio-group">
+            <div class="radio-item">
+              <input type="radio" id="success" value="success" formControlName="outcome">
+              <label for="success">✓ Craving erfolgreich überstanden</label>
+            </div>
+            <div class="radio-item">
+              <input type="radio" id="partial" value="partial" formControlName="outcome">
+              <label for="partial">~ Teilweise erfolgreich</label>
+            </div>
+            <div class="radio-item">
+              <input type="radio" id="relapse" value="relapse" formControlName="outcome">
+              <label for="relapse">✗ Dem Craving nachgegeben</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="duration">Dauer des Cravings (Minuten) *</label>
+          <input
+            type="number"
+            id="duration"
+            formControlName="duration"
+            class="form-control"
+            min="0"
+            placeholder="z.B. 20">
+        </div>
+
+        <div class="form-group">
+          <label for="whatHelped">Was hat geholfen?</label>
+          <textarea
+            id="whatHelped"
+            formControlName="whatHelped"
+            class="form-control"
+            rows="3"
+            placeholder="Welche Strategien waren besonders wirksam? (optional)"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="whatDidntHelp">Was hat NICHT geholfen?</label>
+          <textarea
+            id="whatDidntHelp"
+            formControlName="whatDidntHelp"
+            class="form-control"
+            rows="3"
+            placeholder="Was würdest du beim nächsten Mal anders machen? (optional)"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="notes">Notizen & Erkenntnisse</label>
+          <textarea
+            id="notes"
+            formControlName="notes"
+            class="form-control"
+            rows="4"
+            placeholder="Was möchtest du noch festhalten? (optional)"></textarea>
+        </div>
+      </div>
+
+      <!-- Navigation Buttons -->
+      <div class="wizard-navigation">
+        <button
+          type="button"
+          class="btn-secondary"
+          (click)="previousStep()"
+          *ngIf="currentStep() > 1">
+          ← Zurück
+        </button>
+
+        <button
+          type="button"
+          class="btn-primary"
+          (click)="nextStep()"
+          *ngIf="currentStep() < totalSteps">
+          Weiter →
+        </button>
+
+        <button
+          type="submit"
+          class="btn-success"
+          *ngIf="currentStep() === totalSteps"
+          [disabled]="!triggerForm.valid">
+          ✓ Speichern
+        </button>
+      </div>
+
+    </form>
+
+  </div> <!-- End wizard-content -->
+
+</div>

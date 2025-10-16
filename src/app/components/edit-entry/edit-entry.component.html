@@ -1,0 +1,171 @@
+<!-- src/app/components/edit-entry/edit-entry.component.html -->
+
+<!-- Overlay -->
+<div class="overlay" *ngIf="isOpen()" (click)="closeSheet()"></div>
+
+<!-- Edit Sheet -->
+<div class="edit-sheet" [class.open]="isOpen()">
+
+  <!-- Success Message -->
+  <div class="success-banner" *ngIf="showSuccess()">
+    ✓ Änderungen gespeichert!
+  </div>
+
+  <!-- Header -->
+  <div class="sheet-header">
+    <h2>
+      <span *ngIf="!isQuickEntry()">✏️ Eintrag bearbeiten</span>
+      <span *ngIf="isQuickEntry()">📝 Eintrag vervollständigen</span>
+    </h2>
+    <button class="close-btn" (click)="closeSheet()">✕</button>
+  </div>
+
+  <div class="quick-entry-notice" *ngIf="isQuickEntry()">
+    ⚡ Dieser Eintrag wurde per Schnellerfassung erstellt. Ergänze jetzt die Details!
+  </div>
+
+  <!-- Form -->
+  <form [formGroup]="editForm" (ngSubmit)="onSave()" class="edit-form">
+
+    <!-- Basic Info -->
+    <div class="form-section">
+      <h3>📅 Wann?</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Datum</label>
+          <input type="date" formControlName="date" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Uhrzeit</label>
+          <input type="time" formControlName="time" class="form-control">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Intensität: <strong>{{ editForm.get('intensity')?.value }}/10</strong></label>
+        <input type="range" formControlName="intensity" min="1" max="10" class="slider">
+        <div class="slider-labels">
+          <span>Leicht</span>
+          <span>Stark</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Location & Activity -->
+    <div class="form-section">
+      <h3>📍 Situation</h3>
+      <div class="form-group">
+        <label>Wo warst du?</label>
+        <input type="text" formControlName="location" class="form-control" placeholder="z.B. Zuhause">
+      </div>
+      <div class="form-group">
+        <label>Was hast du gemacht?</label>
+        <input type="text" formControlName="activity" class="form-control" placeholder="z.B. Fernsehen">
+      </div>
+      <div class="form-group">
+        <label>Mit wem?</label>
+        <input type="text" formControlName="withWhom" class="form-control" placeholder="Optional">
+      </div>
+    </div>
+
+    <!-- Emotions -->
+    <div class="form-section">
+      <h3>💭 Emotionen</h3>
+      <div class="checkbox-grid">
+        <div *ngFor="let emotion of emotionOptions" class="checkbox-item">
+          <input
+            type="checkbox"
+            [id]="'edit-emotion-' + emotion"
+            [checked]="editForm.get('emotions')?.value?.includes(emotion)"
+            (change)="onEmotionChange(emotion, $any($event.target).checked)">
+          <label [for]="'edit-emotion-' + emotion">{{ emotion }}</label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Körperliche Signale</label>
+        <textarea formControlName="physicalSensations" class="form-control" rows="2"></textarea>
+      </div>
+    </div>
+
+    <!-- Trigger -->
+    <div class="form-section">
+      <h3>🎯 Trigger</h3>
+      <div class="form-group">
+        <label>Was war der Auslöser?</label>
+        <textarea formControlName="trigger" class="form-control" rows="3"></textarea>
+      </div>
+    </div>
+
+    <!-- Coping -->
+    <div class="form-section">
+      <h3>💪 Bewältigung</h3>
+      <div class="checkbox-grid">
+        <div *ngFor="let strategy of copingStrategyOptions" class="checkbox-item">
+          <input
+            type="checkbox"
+            [id]="'edit-strategy-' + strategy"
+            [checked]="editForm.get('copingStrategy')?.value?.includes(strategy)"
+            (change)="onCopingStrategyChange(strategy, $any($event.target).checked)">
+          <label [for]="'edit-strategy-' + strategy">{{ strategy }}</label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Details</label>
+        <textarea formControlName="copingDetails" class="form-control" rows="2"></textarea>
+      </div>
+    </div>
+
+    <!-- Outcome -->
+    <div class="form-section">
+      <h3>✨ Ergebnis</h3>
+      <div class="radio-group">
+        <div class="radio-item">
+          <input type="radio" id="edit-success" value="success" formControlName="outcome">
+          <label for="edit-success">✓ Erfolgreich</label>
+        </div>
+        <div class="radio-item">
+          <input type="radio" id="edit-partial" value="partial" formControlName="outcome">
+          <label for="edit-partial">~ Teilweise</label>
+        </div>
+        <div class="radio-item">
+          <input type="radio" id="edit-relapse" value="relapse" formControlName="outcome">
+          <label for="edit-relapse">✗ Nachgegeben</label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Dauer (Minuten)</label>
+        <input type="number" formControlName="duration" class="form-control" min="0">
+      </div>
+
+      <div class="form-group">
+        <label>Was hat geholfen?</label>
+        <textarea formControlName="whatHelped" class="form-control" rows="2"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Was hat nicht geholfen?</label>
+        <textarea formControlName="whatDidntHelp" class="form-control" rows="2"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Notizen</label>
+        <textarea formControlName="notes" class="form-control" rows="2"></textarea>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="form-actions">
+      <button type="button" class="btn-cancel" (click)="closeSheet()">
+        Abbrechen
+      </button>
+      <button type="submit" class="btn-save" [disabled]="!editForm.valid">
+        💾 Speichern
+      </button>
+    </div>
+
+  </form>
+
+</div>
