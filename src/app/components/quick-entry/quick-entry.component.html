@@ -1,0 +1,92 @@
+<!-- src/app/components/quick-entry/quick-entry.component.html -->
+
+<!-- Floating Action Button -->
+<button class="fab" (click)="toggleSheet()" [class.hidden]="isOpen()">
+  <span class="fab-icon">+</span>
+</button>
+
+<!-- Overlay (Backdrop) -->
+<div class="overlay" *ngIf="isOpen()" (click)="closeSheet()"></div>
+
+<!-- Bottom Sheet -->
+<div class="bottom-sheet" [class.open]="isOpen()">
+
+  <!-- Success Message -->
+  <div class="success-banner" *ngIf="showSuccess()">
+    ✓ Craving erfasst!
+  </div>
+
+  <!-- Handle (zum Ziehen) -->
+  <div class="sheet-handle"></div>
+
+  <!-- Header -->
+  <div class="sheet-header">
+    <h2>⚡ Schnellerfassung</h2>
+    <button class="close-btn" (click)="closeSheet()">✕</button>
+  </div>
+
+  <!-- Content -->
+  <div class="sheet-content">
+
+    <!-- Intensity Slider -->
+    <div class="intensity-section">
+      <label>Wie stark ist das Craving?</label>
+      <div class="intensity-display">{{ intensity() }}/10</div>
+      <input
+        type="range"
+        min="1"
+        max="10"
+        [value]="intensity()"
+        (input)="setIntensity(+$any($event.target).value)"
+        class="intensity-slider">
+      <div class="intensity-labels">
+        <span>1 (schwach)</span>
+        <span>10 (sehr stark)</span>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+
+      <button class="action-btn primary" (click)="startUrgeSurfing()">
+        <span class="btn-icon">🌊</span>
+        <div class="btn-text">
+          <strong>Urge Surfing</strong>
+          <small>Craving bewältigen</small>
+        </div>
+      </button>
+
+      <button class="action-btn secondary" (click)="quickSave()">
+        <span class="btn-icon">⚡</span>
+        <div class="btn-text">
+          <strong>Schnell speichern</strong>
+          <small>Später ergänzen</small>
+        </div>
+      </button>
+
+      <button class="action-btn tertiary" (click)="fullEntry()">
+        <span class="btn-icon">✨</span>
+        <div class="btn-text">
+          <strong>Geführte Erfassung</strong>
+          <small>Schritt für Schritt (Wizard)</small>
+        </div>
+      </button>
+
+      <button class="action-btn quaternary" (click)="goToSimpleForm()">
+        <span class="btn-icon">📝</span>
+        <div class="btn-text">
+          <strong>Vollständiges Formular</strong>
+          <small>Alle Felder auf einmal</small>
+        </div>
+      </button>
+
+    </div>
+
+    <!-- Info Text -->
+    <p class="info-text">
+      💡 Tipp: Bei starkem Craving erstmal Urge Surfing, Details kannst du später ergänzen.
+    </p>
+
+  </div>
+
+</div>
