@@ -4,7 +4,6 @@ import {Component, OnInit} from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { ToastContainerComponent } from './components/toast-container/toast-container.component';
 import { LoadingComponent } from './components/loading/loading.component';
-import { PwaUpdateService } from './services/pwa-update.service';
 
 @Component({
   selector: 'app-root',
@@ -30,7 +29,7 @@ import { PwaUpdateService } from './services/pwa-update.service';
   `]
 })
 export class AppComponent implements OnInit {
-  constructor(private pwaUpdate: PwaUpdateService) {}
+  constructor() {}
 
   ngOnInit(): void {
     // PWA Update Service startet automatisch

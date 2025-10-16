@@ -7,7 +7,14 @@
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
-          "style": "scss"
+          "style": "scss",
+          "standalone": true
+        },
+        "@schematics/angular:directive": {
+          "standalone": true
+        },
+        "@schematics/angular:pipe": {
+          "standalone": true
         }
       },
       "root": "",
@@ -15,51 +22,57 @@
       "prefix": "app",
       "architect": {
         "build": {
-          "builder": "@angular/build:application",
+          "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "browser": "src/main.ts",
+            "outputPath": "dist/trigger-tagebuch/browser",
+            "index": "src/index.html",
+            "main": "src/main.ts",
             "polyfills": [
               "zone.js"
             ],
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "assets": [
-              {
-                "glob": "**/*",
-                "input": "public"
-              }
+              "src/favicon.ico",
+              "src/assets",
+              "src/sw.js",
+              "src/manifest.webmanifest"
             ],
             "styles": [
               "src/styles.scss"
-            ]
+            ],
+            "scripts": [],
+            "allowedCommonJsDependencies": []
           },
           "configurations": {
             "production": {
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1MB"
+                  "maximumWarning": "500kb",
+                  "maximumError": "1mb"
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "8kB",
-                  "maximumError": "12kB"
+                  "maximumWarning": "5kb",
+                  "maximumError": "10kb"
                 }
               ],
-              "outputHashing": "all",
-              "serviceWorker": "ngsw-config.json"
+              "outputHashing": "all"
             },
             "development": {
+              "buildOptimizer": false,
               "optimization": false,
+              "vendorChunk": true,
               "extractLicenses": false,
-              "sourceMap": true
+              "sourceMap": true,
+              "namedChunks": true
             }
           },
           "defaultConfiguration": "production"
         },
         "serve": {
-          "builder": "@angular/build:dev-server",
+          "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
               "buildTarget": "trigger-tagebuch:build:production"
@@ -71,26 +84,9 @@
           "defaultConfiguration": "development"
         },
         "extract-i18n": {
-          "builder": "@angular/build:extract-i18n"
-        },
-        "test": {
-          "builder": "@angular/build:karma",
+          "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "polyfills": [
-              "zone.js",
-              "zone.js/testing"
-            ],
-            "tsConfig": "tsconfig.spec.json",
-            "inlineStyleLanguage": "scss",
-            "assets": [
-              {
-                "glob": "**/*",
-                "input": "public"
-              }
-            ],
-            "styles": [
-              "src/styles.scss"
-            ]
+            "buildTarget": "trigger-tagebuch:build"
           }
         }
       }
